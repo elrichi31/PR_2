@@ -44,6 +44,7 @@ public class FactorialCalculator extends Application {
 
         
         Button calculateButton = new Button("Calculate");
+        Button resetButton = new Button("Reset");
         
         //se ingresan los valores preguntados
         //se especifica las caracteristicas de las hbox en donde se ingresan los datos
@@ -62,13 +63,21 @@ public class FactorialCalculator extends Application {
         resultsBox.setSpacing(30);
 
         //la vbox en donde se despliega todo
-        VBox layout = new VBox(inputBox, inputBox2, calculateButton, resultsBox);
+        VBox layout = new VBox(inputBox, inputBox2, calculateButton, resetButton, resultsBox);
         layout.setSpacing(10);
         layout.setPadding(new Insets(10));
 
+        resetButton.setOnAction(event -> {
+        parallelBox.getChildren().clear();
+        concurrentBox.getChildren().clear();
+        numberField.setText("");
+        numberThreadField.setText("");
+        });
         
         //el calculo del factorial empieza tras accionar el boton
         calculateButton.setOnAction(event -> {
+
+            calculateButton.setDisable(true);
         
             // Se toman los valores de los textfields y se crean los threads paralelos
             //Se castea al tipo de datos para su manejo 
@@ -110,7 +119,13 @@ public class FactorialCalculator extends Application {
             concurrentBox.getChildren().addAll(new Label("Total time: " + formato1.format(timeResult) + " ms"));
             concurrentBox.getChildren().addAll(new Label("Result: " + result2));
             
+            calculateButton.setDisable(false);
+            
         });
+         
+        
+        
+        
         
         //se agrega todas las boxes a la scene y luego a la stage del GUI
         Scene scene = new Scene(layout, 900, 600);
