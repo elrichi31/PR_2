@@ -24,22 +24,29 @@ import java.util.concurrent.Future;
 
 public class FactorialCalculator extends Application {
 
-    ExecutorService executorService;
-    TimeData timeData = new TimeData();
+    ExecutorService executorService;//objeto de la clase ExecutorService
+    TimeData timeData = new TimeData();//objeto para medir tiempos
     
     @Override
+    //se sobrecarga el metodo start para la GUI de JavaFX
     public void start(Stage primaryStage) {
-        primaryStage.setTitle("Factorial Calculator");
+        primaryStage.setTitle("Factorial Calculator");//titulo del GUI
         DecimalFormat formato1 = new DecimalFormat("#0.0000");
-
+         
+        //nombre de los campos a preguntar al usuario
         Label numberLabel = new Label("Number:");
         Label numberThreadLabel = new Label("Threads");
 
+        
+        //el usuario decide el numero a calcular y el numero de threads que desea
         TextField numberField = new TextField();
         TextField numberThreadField = new TextField();
 
+        
         Button calculateButton = new Button("Calculate");
-
+        
+        //se ingresan los valores preguntados
+        //se especifica las caracteristicas de las hbox en donde se ingresan los datos
         HBox inputBox = new HBox(numberLabel, numberField);
         inputBox.setSpacing(7);
         inputBox.setPadding(new Insets(7));
@@ -48,30 +55,39 @@ public class FactorialCalculator extends Application {
         inputBox2.setSpacing(7);
         inputBox2.setPadding(new Insets(7));
 
+        //se especifica las caracteristicas de la hbox en donde se muestran los resultados
         VBox parallelBox = new VBox();
         VBox concurrentBox = new VBox();
         HBox resultsBox = new HBox(parallelBox, concurrentBox);
         resultsBox.setSpacing(30);
 
+        //la vbox en donde se despliega todo
         VBox layout = new VBox(inputBox, inputBox2, calculateButton, resultsBox);
         layout.setSpacing(10);
         layout.setPadding(new Insets(10));
 
         
+        //el calculo del factorial empieza tras accionar el boton
         calculateButton.setOnAction(event -> {
+        
             // Se toman los valores de los textfields y se crean los threads paralelos
+            //Se castea al tipo de datos para su manejo 
             String numberString = numberField.getText();
             int numberThreadsInt = Integer.parseInt(numberThreadField.getText());
             BigInteger number = new BigInteger(numberString);
+            
+            //Dados los threads, se calcula el factorial en paralelo
             List<FactorialTask> tasksParallel = new ArrayList<>();
-
             BigInteger result1 = createAndExecuteThreads(numberThreadsInt, number, tasksParallel);
-
+            
+            //se despliegan los resultados y tiempos por intervalos
+            //el numero de intervalos es el numero de threads
             parallelBox.getChildren().addAll(new Label("HILOS PARALELOS"));
             double time1 = Duration.between(timeData.start1, timeData.end1).toNanos()*0.000001;
             for(FactorialTask task: tasksParallel){
                 parallelBox.getChildren().add(new Label("Start: " + task.start + " End: " + task.end + " || " + " Time: " + formato1.format(task.time1) + " ms"));
             }
+            //se muestra el tiempo total de los hilos paralelos junto con el factorial resultante
             parallelBox.getChildren().addAll(new Label("Total time: " + formato1.format(time1) + " ms"));
             parallelBox.getChildren().addAll(new Label("Result: " + result1));
 
@@ -80,7 +96,8 @@ public class FactorialCalculator extends Application {
             TimeData timeConcurrent = new TimeData();
             timeConcurrent.start1 = Instant.now();
             List<FactorialTask> tasksConcurrent = new ArrayList<>();
-
+            
+            //se usa el mismo algoritmo de calculo pero con 1 thread 
             BigInteger result2 = createAndExecuteThreads(1, number, tasksConcurrent);
             timeConcurrent.end1 = Instant.now(); 
             double timeResult = Duration.between(timeConcurrent.start1, timeConcurrent.end1).toNanos()*0.000001;
@@ -89,50 +106,73 @@ public class FactorialCalculator extends Application {
             for(FactorialTask task: tasksConcurrent){
                 concurrentBox.getChildren().add(new Label("Start: " + task.start + " End: " + task.end + " || " + " Time: " + formato1.format(task.time1) + " ms"));
             }
+            //se muestra el tiempo total del hilo concurrente junto con el factorial resultante
             concurrentBox.getChildren().addAll(new Label("Total time: " + formato1.format(timeResult) + " ms"));
             concurrentBox.getChildren().addAll(new Label("Result: " + result2));
             
         });
-
+        
+        //se agrega todas las boxes a la scene y luego a la stage del GUI
         Scene scene = new Scene(layout, 900, 600);
         primaryStage.setScene(scene);
         primaryStage.show();
 
     }
+    
+    //metodo para el calculo del factorial en hilos paralelos
     public BigInteger createAndExecuteThreads(int numTasks, BigInteger number, List<FactorialTask> tasks){
+        
+        //el executorService nos sirve para hacer los hilos en paralelo y mostrarlos en el GUI
         executorService = Executors.newFixedThreadPool(numTasks);
+        
+        //dado el numero de threads, se divide al numero del que se desea calcular el factorial
+        //para obtener el tamaño de los intervalos
         BigInteger chunkSize = number.divide(BigInteger.valueOf(numTasks));
+        
+        //por default, el factorial de 0 es 1 y el factorial de 1 es 1
         BigInteger start = BigInteger.ONE;
         BigInteger end = chunkSize;
+        
+        //cuantos hilos se van a tener
         for (int i = 0; i < numTasks; i++) {
             if (i == numTasks - 1) {
-                    end = number;
+                    end = number;//tamaño de los intervalos
             }
+            
+            //el intervalo calculado, que representa la operacion de un hilo, se agrega a 
+            //una lista para ser mostrado en el GUI, mediante el ArrayList taskParallel
             FactorialTask task = new FactorialTask(start, end);
             tasks.add(task);
+            //se prosigue con el siguiente hilo/intervalo
             start = end.add(BigInteger.ONE);
             end = end.add(chunkSize);
         }
         
+        //se mide el tiempo una vez se termina todo el calculo
         timeData.start1 = Instant.now(); 
-
+        
+        //se hace uso de la clase future, esta trabaja con el ExecutorService
+        //mediante submit, similar a runnable y run
         List<Future<BigInteger>> futures = new ArrayList<>();
+        //se procede con todos los threads
         for (FactorialTask task : tasks) {
+            //uno a uno son agregados(submit)
             Future<?> future = executorService.submit(task);
             futures.add((Future<BigInteger>) future);
         }
-        BigInteger result = BigInteger.ONE;
+        
+        BigInteger result = BigInteger.ONE;//factorial de 0 es 1, factorial de 1 es 1
         for (Future<BigInteger> future : futures) {
             try {
                 
-                result = result.multiply(future.get());
+                result = result.multiply(future.get());//calculo del factorial, se ve mas adelante
             } catch (InterruptedException | ExecutionException e) {
                 e.printStackTrace();
             }
         }
-        executorService.shutdown();
-        timeData.end1 = Instant.now(); 
-        return result; 
+        executorService.shutdown();//se concluye con el proceso de los hilos
+        timeData.end1 = Instant.now();//finalmente se mide el tiempo total
+        return result;//resultado del factorial
     }
 
     @Override
@@ -141,23 +181,24 @@ public class FactorialCalculator extends Application {
         executorService.shutdownNow();
     }
 
-    public class FactorialTask implements Callable<BigInteger> {
+    public class FactorialTask implements Callable<BigInteger> {//clase donde se maneja el calculo del factorial
         private final BigInteger start;
         private final BigInteger end;
         DecimalFormat formato1 = new DecimalFormat("#0.0000");
         public double time1;
     
-        public FactorialTask(BigInteger start, BigInteger end) {
+        public FactorialTask(BigInteger start, BigInteger end) {//constuctor de la clase
             this.start = start;
             this.end = end;
         }
-    
+        
+        //metodo de submit, al sobrecargarlo se agrega el algoritmo de calculo de factorial
         @Override
         public BigInteger call() throws Exception {
             BigInteger result = BigInteger.ONE;
             TimeData timeData = new TimeData();
-            timeData.start1 = Instant.now(); 
-            for (BigInteger i = start; i.compareTo(end) <= 0; i = i.add(BigInteger.ONE)) {
+            timeData.start1 = Instant.now(); //se mide el tiempo antes del calculo
+            for (BigInteger i = start; i.compareTo(end) <= 0; i = i.add(BigInteger.ONE)) {//algoritmo manejando BigIntegers
                 try {
                     result = result.multiply(i);
                 } catch (Exception e) {
@@ -165,9 +206,9 @@ public class FactorialCalculator extends Application {
                     return BigInteger.ZERO;
                 }
             }
-            timeData.end1 = Instant.now(); 
+            timeData.end1 = Instant.now();//se mide el tiempo luego del calculo
             double time1 = Duration.between(timeData.start1, timeData.end1).toNanos()*0.000001;
-            this.time1 = time1;
+            this.time1 = time1;//se actualiza el tiempo y el resultado del factorial
             return result;
         }
     }
