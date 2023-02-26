@@ -93,8 +93,10 @@ public class FactorialCalculator extends Application {
             //el numero de intervalos es el numero de threads
             parallelBox.getChildren().addAll(new Label("HILOS PARALELOS"));
             double time1 = Duration.between(timeData.start1, timeData.end1).toNanos()*0.000001;
+            int counter = 0;
             for(FactorialTask task: tasksParallel){
-                parallelBox.getChildren().add(new Label("Start: " + task.start + " End: " + task.end + " || " + " Time: " + formato1.format(task.time1) + " ms"));
+                counter = counter + 1;
+                parallelBox.getChildren().add(new Label("Thread: " + counter + " || " + "Start: " + task.start + " End: " + task.end + " || " + " Time: " + formato1.format(task.time1) + " ms"));
             }
             //se muestra el tiempo total de los hilos paralelos junto con el factorial resultante
             parallelBox.getChildren().addAll(new Label("Total time: " + formato1.format(time1) + " ms"));
@@ -123,10 +125,6 @@ public class FactorialCalculator extends Application {
             
         });
          
-        
-        
-        
-        
         //se agrega todas las boxes a la scene y luego a la stage del GUI
         Scene scene = new Scene(layout, 900, 600);
         primaryStage.setScene(scene);
@@ -188,12 +186,6 @@ public class FactorialCalculator extends Application {
         executorService.shutdown();//se concluye con el proceso de los hilos
         timeData.end1 = Instant.now();//finalmente se mide el tiempo total
         return result;//resultado del factorial
-    }
-
-    @Override
-    public void stop() throws Exception {
-        super.stop();
-        executorService.shutdownNow();
     }
 
     public class FactorialTask implements Callable<BigInteger> {//clase donde se maneja el calculo del factorial
