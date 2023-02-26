@@ -180,7 +180,7 @@ public class FactorialCalculator extends Application {
         for (Future<BigInteger> future : futures) {
             try {
                 
-                result = result.multiply(future.get());//calculo del factorial, se ve mas adelante
+                result = result.multiply(future.get());//calculo del factorial de los hilos para el resultado total
             } catch (InterruptedException | ExecutionException e) {
                 e.printStackTrace();
             }
@@ -215,7 +215,7 @@ public class FactorialCalculator extends Application {
             timeData.start1 = Instant.now(); //se mide el tiempo antes del calculo
             for (BigInteger i = start; i.compareTo(end) <= 0; i = i.add(BigInteger.ONE)) {//algoritmo manejando BigIntegers
                 try {
-                    result = result.multiply(i);
+                    result = result.multiply(i);//algoritmo para calcular el factorial, usado en los intervalos
                 } catch (Exception e) {
                     e.printStackTrace();
                     return BigInteger.ZERO;
