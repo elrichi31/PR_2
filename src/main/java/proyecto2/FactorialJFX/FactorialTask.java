@@ -1,3 +1,5 @@
+package proyecto2.FactorialJFX;
+
 // Task subclass for calculating factorial result in the background
 import java.math.BigInteger;
 import java.time.Duration;

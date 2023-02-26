@@ -1,3 +1,5 @@
+package proyecto2.FactorialJFX;
+
 // Main application class that loads and displays the Factorial GUI.
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
